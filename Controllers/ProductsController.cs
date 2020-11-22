@@ -3,6 +3,8 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Products.Models;
 using Products.Queries;
+using Products.Commands;
+using Products.CommandValidators;
 
 namespace Products.Controllers
 {
@@ -34,6 +36,30 @@ namespace Products.Controllers
             }
         }
 
+        private ProductsCommand productsCommand;
+        private ProductsCommand ProductsCommand
+        {
+            get
+            {
+                if (productsCommand == null) {
+                    productsCommand = new ProductsCommand();
+                }
+                return productsCommand;
+            }
+        }
+
+        private ProductsCommandValidator productsCommandValidator;
+        private ProductsCommandValidator ProductsCommandValidator
+        {
+            get
+            {
+                if (productsCommandValidator == null) {
+                    productsCommandValidator = new ProductsCommandValidator();
+                }
+                return productsCommandValidator;
+            }
+        }
+
         [HttpGet]
         [ProducesResponseType(StatusCodes.Status200OK)]
         public IActionResult Get()
@@ -54,31 +80,31 @@ namespace Products.Controllers
         }
 
         [HttpPost]
-        public void Post(Product product)
+        [ProducesResponseType(StatusCodes.Status204NoContent)]
+        public IActionResult Post(Product product)
         {
-            product.Save();
+            ProductsCommand.CreateProduct(product);
+            return NoContent();
         }
 
         [HttpPut("{id}")]
-        public void Update(Guid id, Product product)
+        [ProducesResponseType(StatusCodes.Status204NoContent)]
+        public IActionResult Update(Guid id, Product product)
         {
-            var orig = new Product(id)
-            {
-                Name = product.Name,
-                Description = product.Description,
-                Price = product.Price,
-                DeliveryPrice = product.DeliveryPrice
-            };
+            var errors = ProductsCommandValidator.ValidateUpdateProduct(id, product);
+            if (errors.Count == 0) {
+                ProductsCommand.UpdateProduct(id, product);
+            }
 
-            if (!orig.IsNew)
-                orig.Save();
+            return NoContent();
         }
 
         [HttpDelete("{id}")]
-        public void Delete(Guid id)
+        [ProducesResponseType(StatusCodes.Status204NoContent)]
+        public IActionResult Delete(Guid id)
         {
-            var product = new Product(id);
-            product.Delete();
+            ProductsCommand.DeleteProduct(id);
+            return NoContent();
         }
 
         [HttpGet("{productId}/options")]
