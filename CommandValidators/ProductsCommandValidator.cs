@@ -23,6 +23,7 @@ namespace Products.CommandValidators
           Status = StatusCodes.Status404NotFound,
           Message = "Product not found",
         });
+        return errors;
       }
       return errors;
     }

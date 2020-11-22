@@ -5,6 +5,8 @@ using Products.Models;
 using Products.Queries;
 using Products.Commands;
 using Products.CommandValidators;
+using System.Linq;
+using Newtonsoft.Json;
 
 namespace Products.Controllers
 {
@@ -57,6 +59,30 @@ namespace Products.Controllers
                     productsCommandValidator = new ProductsCommandValidator();
                 }
                 return productsCommandValidator;
+            }
+        }
+
+        private ProductOptionsCommand productOptionsCommand;
+        private ProductOptionsCommand ProductOptionsCommand
+        {
+            get
+            {
+                if (productOptionsCommand == null) {
+                    productOptionsCommand = new ProductOptionsCommand();
+                }
+                return productOptionsCommand;
+            }
+        }
+
+        private ProductOptionsCommandValidator productOptionsCommandValidator;
+        private ProductOptionsCommandValidator ProductOptionsCommandValidator
+        {
+            get
+            {
+                if (productOptionsCommandValidator == null) {
+                    productOptionsCommandValidator = new ProductOptionsCommandValidator();
+                }
+                return productOptionsCommandValidator;
             }
         }
 
@@ -127,30 +153,51 @@ namespace Products.Controllers
         }
 
         [HttpPost("{productId}/options")]
-        public void CreateOption(Guid productId, ProductOption option)
+        [ProducesResponseType(StatusCodes.Status204NoContent)]
+        [ProducesResponseType(StatusCodes.Status404NotFound)]
+        public IActionResult CreateOption(Guid productId, ProductOption option)
         {
-            option.ProductId = productId;
-            option.Save();
+            var results = ProductOptionsCommandValidator.ValidateCreateOption(productId, option);
+            if (results.Count != 0) {
+                var error = results.First();
+                if (error.Status == StatusCodes.Status404NotFound)
+                {
+                    return NotFound();
+                }
+                throw new Exception(JsonConvert.SerializeObject(error));
+            }
+
+            ProductOptionsCommand.CreateOption(productId, option);
+            return NoContent();
         }
 
         [HttpPut("{productId}/options/{id}")]
-        public void UpdateOption(Guid id, ProductOption option)
+        [ProducesResponseType(StatusCodes.Status204NoContent)]
+        [ProducesResponseType(StatusCodes.Status404NotFound)]
+        public IActionResult UpdateOption(Guid id, ProductOption option)
         {
-            var orig = new ProductOption(id)
-            {
-                Name = option.Name,
-                Description = option.Description
-            };
 
-            if (!orig.IsNew)
-                orig.Save();
+            var results = ProductOptionsCommandValidator.ValidateUpdateOption(id, option);
+            if (results.Count != 0) {
+                var error = results.First();
+                if (error.Status == StatusCodes.Status404NotFound)
+                {
+                    return NotFound();
+                }
+                throw new Exception(JsonConvert.SerializeObject(error));
+            }
+
+            ProductOptionsCommand.UpdateOption(id, option);
+            return NoContent();
         }
 
         [HttpDelete("{productId}/options/{id}")]
-        public void DeleteOption(Guid id)
+        [ProducesResponseType(StatusCodes.Status204NoContent)]
+
+        public IActionResult DeleteOption(Guid id)
         {
-            var opt = new ProductOption(id);
-            opt.Delete();
+            ProductOptionsCommand.DeleteOption(id);
+            return NoContent();
         }
     }
 }
