@@ -1,15 +1,20 @@
 ﻿using System.Data.SqlClient;
 using Microsoft.Data.Sqlite;
 
-namespace RefactorThis.Models
+namespace Products.Models
 {
     public class Helpers
     {
+        private static SqliteConnection Connection;
         private const string ConnectionString = "Data Source=App_Data/products.db";
 
         public static SqliteConnection NewConnection()
         {
-            return new SqliteConnection(ConnectionString);
+            if (Connection == null) {
+                Connection = new SqliteConnection(ConnectionString);
+            }
+
+            return Connection;
         }
     }
 }

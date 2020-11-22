@@ -1,17 +1,17 @@
 ﻿using System;
 using Microsoft.AspNetCore.Mvc;
-using RefactorThis.Models;
+using Products.Models;
 
-namespace RefactorThis.Controllers
+namespace Products.Controllers
 {
     [Route("api/[controller]")]
     [ApiController]
     public class ProductsController : ControllerBase
     {
         [HttpGet]
-        public Products Get()
+        public Models.Products Get()
         {
-            return new Products();
+            return new Models.Products();
         }
 
         [HttpGet("{id}")]
