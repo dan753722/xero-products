@@ -15,18 +15,23 @@ namespace Products.Models
 
         public ProductOptions(Guid productId)
         {
-            LoadProductOptions($"where productid = '{productId}' collate nocase");
+            LoadProductOptions(productId);
         }
 
-        private void LoadProductOptions(string where)
+        private void LoadProductOptions(Guid? productId)
         {
             Items = new List<ProductOption>();
             var conn = Helpers.NewConnection();
             conn.Open();
             var cmd = conn.CreateCommand();
 
-            cmd.CommandText = where == null ? "select id from productoptions" : "select id from productoptions $where";
-            cmd.Parameters.AddWithValue("$where", where);
+            if (productId == null) {
+                cmd.CommandText = "select id from productoptions";
+            }
+            else {
+                cmd.CommandText = "select id from productoptions where productid = $productId collate nocase";
+                cmd.Parameters.AddWithValue("$productId", productId);
+            }
             var rdr = cmd.ExecuteReader();
             while (rdr.Read())
             {

@@ -15,21 +15,21 @@ namespace Products.Models
 
         public Products(string name)
         {
-            LoadProducts($"where lower(name) like '%{name.ToLower()}%'");
+            LoadProducts(name);
         }
 
-        private void LoadProducts(string where)
+        private void LoadProducts(string name)
         {
             Items = new List<Product>();
             var conn = Helpers.NewConnection();
             conn.Open();
             var cmd = conn.CreateCommand();
-            if (where == null) {
+            if (name == null) {
                 cmd.CommandText = "select id from Products";
             }
             else {
-                cmd.CommandText = "select id from Products $where";
-                cmd.Parameters.AddWithValue("$where", where);
+                cmd.CommandText = "select id from Products where lower(name) like %$name%";
+                cmd.Parameters.AddWithValue("$name", name.ToLower());
             }
             var rdr = cmd.ExecuteReader();
             while (rdr.Read())

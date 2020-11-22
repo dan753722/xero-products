@@ -1,6 +1,8 @@
 ﻿using System;
+using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Products.Models;
+using Products.Queries;
 
 namespace Products.Controllers
 {
@@ -8,20 +10,47 @@ namespace Products.Controllers
     [ApiController]
     public class ProductsController : ControllerBase
     {
-        [HttpGet]
-        public Models.Products Get()
+        private ProductsQuery productsQuery;
+        private ProductsQuery ProductsQuery
         {
-            return new Models.Products();
+            get
+            {
+                if (productsQuery == null) {
+                    productsQuery = new ProductsQuery();
+                }
+                return productsQuery;
+            }
+        }
+
+        private ProductOptionsQuery productOptionsQuery;
+        private ProductOptionsQuery ProductOptionsQuery
+        {
+            get
+            {
+                if (productOptionsQuery == null) {
+                    productOptionsQuery = new ProductOptionsQuery();
+                }
+                return productOptionsQuery;
+            }
+        }
+
+        [HttpGet]
+        [ProducesResponseType(StatusCodes.Status200OK)]
+        public IActionResult Get()
+        {
+            return Ok(ProductsQuery.GetProducts());
         }
 
         [HttpGet("{id}")]
-        public Product Get(Guid id)
+        [ProducesResponseType(StatusCodes.Status200OK)]
+        [ProducesResponseType(StatusCodes.Status404NotFound)]
+        public IActionResult Get(Guid id)
         {
-            var product = new Product(id);
-            if (product.IsNew)
-                throw new Exception();
+            var product = ProductsQuery.GetProduct(id);
+            if (product == null)
+                return NotFound();
 
-            return product;
+            return Ok(product);
         }
 
         [HttpPost]
@@ -53,19 +82,22 @@ namespace Products.Controllers
         }
 
         [HttpGet("{productId}/options")]
-        public ProductOptions GetOptions(Guid productId)
+        [ProducesResponseType(StatusCodes.Status200OK)]
+        public IActionResult GetOptions(Guid productId)
         {
-            return new ProductOptions(productId);
+            return Ok(ProductOptionsQuery.GetOptions(productId));
         }
 
         [HttpGet("{productId}/options/{id}")]
-        public ProductOption GetOption(Guid productId, Guid id)
+        [ProducesResponseType(StatusCodes.Status200OK)]
+        [ProducesResponseType(StatusCodes.Status404NotFound)]
+        public IActionResult GetOption(Guid productId, Guid id)
         {
-            var option = new ProductOption(id);
-            if (option.IsNew)
-                throw new Exception();
+            var option = ProductOptionsQuery.GetOption(productId, id);
+            if (option == null)
+                return NotFound();
 
-            return option;
+            return Ok(option);
         }
 
         [HttpPost("{productId}/options")]
