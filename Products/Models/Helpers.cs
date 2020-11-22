@@ -1,4 +1,6 @@
-﻿using System.Data.SqlClient;
+﻿using System;
+using System.Data.SqlClient;
+using System.IO;
 using Microsoft.Data.Sqlite;
 
 namespace Products.Models
