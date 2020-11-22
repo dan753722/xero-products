@@ -24,8 +24,13 @@ namespace Products.Models
             var conn = Helpers.NewConnection();
             conn.Open();
             var cmd = conn.CreateCommand();
-            cmd.CommandText = $"select id from Products {where}";
-
+            if (where == null) {
+                cmd.CommandText = "select id from Products";
+            }
+            else {
+                cmd.CommandText = "select id from Products $where";
+                cmd.Parameters.AddWithValue("$where", where);
+            }
             var rdr = cmd.ExecuteReader();
             while (rdr.Read())
             {

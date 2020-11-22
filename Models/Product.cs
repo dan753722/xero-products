@@ -29,7 +29,8 @@ namespace Products.Models {
             var conn = Helpers.NewConnection();
             conn.Open();
             var cmd = conn.CreateCommand();
-            cmd.CommandText = $"select * from Products where id = '{id}' collate nocase";
+            cmd.CommandText = "select * from Products where id = $id collate nocase";
+            cmd.Parameters.AddWithValue("$id", id);
 
             var rdr = cmd.ExecuteReader();
             if (!rdr.Read())
@@ -52,8 +53,14 @@ namespace Products.Models {
             var cmd = conn.CreateCommand();
 
             cmd.CommandText = IsNew
-                ? $"insert into Products (id, name, description, price, deliveryprice) values ('{Id}', '{Name}', '{Description}', {Price}, {DeliveryPrice})"
-                : $"update Products set name = '{Name}', description = '{Description}', price = {Price}, deliveryprice = {DeliveryPrice} where id = '{Id}' collate nocase";
+                ? "insert into Products (id, name, description, price, deliveryprice) values ($id, $name, $description, $price, $deliveryPrice)"
+                : "update Products set name = $name, description = $description, price = $price, deliveryprice = $deliveryPrice where id = $id collate nocase";
+            
+            cmd.Parameters.AddWithValue("$id", Id);
+            cmd.Parameters.AddWithValue("$name", Name);
+            cmd.Parameters.AddWithValue("$description", Description);
+            cmd.Parameters.AddWithValue("$price", Price);
+            cmd.Parameters.AddWithValue("$deliveryPrice", DeliveryPrice);
 
             conn.Open();
             cmd.ExecuteNonQuery();
@@ -68,7 +75,8 @@ namespace Products.Models {
             conn.Open();
             var cmd = conn.CreateCommand();
 
-            cmd.CommandText = $"delete from Products where id = '{Id}' collate nocase";
+            cmd.CommandText = "delete from Products where id = $id collate nocase";
+            cmd.Parameters.AddWithValue("$id", Id);
             cmd.ExecuteNonQuery();
         }
     }

@@ -1,5 +1,4 @@
 using System;
-using System.Collections.Generic;
 using Newtonsoft.Json;
 
 namespace Products.Models
@@ -29,7 +28,8 @@ namespace Products.Models
             conn.Open();
             var cmd = conn.CreateCommand();
 
-            cmd.CommandText = $"select * from productoptions where id = '{id}' collate nocase";
+            cmd.CommandText = $"select * from productoptions where id = $id collate nocase";
+            cmd.Parameters.AddWithValue("$id", id);
 
             var rdr = cmd.ExecuteReader();
             if (!rdr.Read())
@@ -49,9 +49,13 @@ namespace Products.Models
             var cmd = conn.CreateCommand();
 
             cmd.CommandText = IsNew
-                ? $"insert into productoptions (id, productid, name, description) values ('{Id}', '{ProductId}', '{Name}', '{Description}')"
-                : $"update productoptions set name = '{Name}', description = '{Description}' where id = '{Id}' collate nocase";
+                ? $"insert into productoptions (id, productid, name, description) values ($id, $productId, $name, $description)"
+                : $"update productoptions set name = $name, description = $description where id = $id collate nocase";
 
+            cmd.Parameters.AddWithValue("$id", Id);
+            cmd.Parameters.AddWithValue("$productId", ProductId);
+            cmd.Parameters.AddWithValue("$name", Name);
+            cmd.Parameters.AddWithValue("$description", Description);
             cmd.ExecuteNonQuery();
         }
 
@@ -60,7 +64,8 @@ namespace Products.Models
             var conn = Helpers.NewConnection();
             conn.Open();
             var cmd = conn.CreateCommand();
-            cmd.CommandText = $"delete from productoptions where id = '{Id}' collate nocase";
+            cmd.CommandText = "delete from productoptions where id = $id collate nocase";
+            cmd.Parameters.AddWithValue("$id", Id);
             cmd.ExecuteReader();
         }
     }
