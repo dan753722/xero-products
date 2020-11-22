@@ -3,7 +3,7 @@ using Products.Models;
 
 namespace Products.Queries
 {
-  public class ProductsQuery
+  public class ProductsQuery : IProductsQuery
   {
     public Models.Products GetProducts()
     {

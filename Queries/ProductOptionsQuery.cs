@@ -3,7 +3,7 @@ using Products.Models;
 
 namespace Products.Queries
 {
-  public class ProductOptionsQuery
+  public class ProductOptionsQuery : IProductOptionsQuery
   {
     public ProductOptions GetOptions(Guid productId)
     {

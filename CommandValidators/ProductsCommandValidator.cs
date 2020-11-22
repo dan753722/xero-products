@@ -5,7 +5,7 @@ using Products.Models;
 
 namespace Products.CommandValidators
 {
-  public class ProductsCommandValidator
+  public class ProductsCommandValidator : IProductsCommandValidator
   {
     public List<Error> ValidateUpdateProduct(Guid id, Product product)
     {

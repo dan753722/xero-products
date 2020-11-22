@@ -5,7 +5,7 @@ using Products.Models;
 
 namespace Products.CommandValidators
 {
-  public class ProductOptionsCommandValidator
+  public class ProductOptionsCommandValidator: IProductOptionsCommandValidator
   {
     public List<Error> ValidateCreateOption(Guid productId, ProductOption option)
     {

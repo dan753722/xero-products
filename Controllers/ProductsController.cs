@@ -7,6 +7,7 @@ using Products.Commands;
 using Products.CommandValidators;
 using System.Linq;
 using Newtonsoft.Json;
+using Microsoft.Extensions.Logging;
 
 namespace Products.Controllers
 {
@@ -14,83 +15,40 @@ namespace Products.Controllers
     [ApiController]
     public class ProductsController : ControllerBase
     {
-        private ProductsQuery productsQuery;
-        private ProductsQuery ProductsQuery
+        public ProductsController(
+            IProductsQuery productsQuery,
+            IProductOptionsQuery productOptionsQuery,
+            IProductsCommand productsCommand,
+            IProductsCommandValidator productsCommandValidator,
+            IProductOptionsCommand productOptionsCommand,
+            IProductOptionsCommandValidator productOptionsCommandValidator
+        )
         {
-            get
-            {
-                if (productsQuery == null) {
-                    productsQuery = new ProductsQuery();
-                }
-                return productsQuery;
-            }
+            _productsQuery = productsQuery;
+            _productOptionsQuery = productOptionsQuery;
+            _productsCommand = productsCommand;
+            _productOptionsCommand = productOptionsCommand;
+            _productOptionsCommandValidator = productOptionsCommandValidator;
+            _productsCommandValidator = productsCommandValidator;
         }
 
-        private ProductOptionsQuery productOptionsQuery;
-        private ProductOptionsQuery ProductOptionsQuery
-        {
-            get
-            {
-                if (productOptionsQuery == null) {
-                    productOptionsQuery = new ProductOptionsQuery();
-                }
-                return productOptionsQuery;
-            }
-        }
+        private readonly IProductsQuery _productsQuery;
 
-        private ProductsCommand productsCommand;
-        private ProductsCommand ProductsCommand
-        {
-            get
-            {
-                if (productsCommand == null) {
-                    productsCommand = new ProductsCommand();
-                }
-                return productsCommand;
-            }
-        }
+        private readonly IProductOptionsQuery _productOptionsQuery;
 
-        private ProductsCommandValidator productsCommandValidator;
-        private ProductsCommandValidator ProductsCommandValidator
-        {
-            get
-            {
-                if (productsCommandValidator == null) {
-                    productsCommandValidator = new ProductsCommandValidator();
-                }
-                return productsCommandValidator;
-            }
-        }
+        private readonly IProductsCommand _productsCommand;
 
-        private ProductOptionsCommand productOptionsCommand;
-        private ProductOptionsCommand ProductOptionsCommand
-        {
-            get
-            {
-                if (productOptionsCommand == null) {
-                    productOptionsCommand = new ProductOptionsCommand();
-                }
-                return productOptionsCommand;
-            }
-        }
+        private readonly IProductsCommandValidator _productsCommandValidator;
 
-        private ProductOptionsCommandValidator productOptionsCommandValidator;
-        private ProductOptionsCommandValidator ProductOptionsCommandValidator
-        {
-            get
-            {
-                if (productOptionsCommandValidator == null) {
-                    productOptionsCommandValidator = new ProductOptionsCommandValidator();
-                }
-                return productOptionsCommandValidator;
-            }
-        }
+        private readonly IProductOptionsCommand _productOptionsCommand;
+
+        private readonly IProductOptionsCommandValidator _productOptionsCommandValidator;
 
         [HttpGet]
         [ProducesResponseType(StatusCodes.Status200OK)]
         public IActionResult Get()
         {
-            return Ok(ProductsQuery.GetProducts());
+            return Ok(_productsQuery.GetProducts());
         }
 
         [HttpGet("{id}")]
@@ -98,7 +56,7 @@ namespace Products.Controllers
         [ProducesResponseType(StatusCodes.Status404NotFound)]
         public IActionResult Get(Guid id)
         {
-            var product = ProductsQuery.GetProduct(id);
+            var product = _productsQuery.GetProduct(id);
             if (product == null)
                 return NotFound();
 
@@ -109,7 +67,7 @@ namespace Products.Controllers
         [ProducesResponseType(StatusCodes.Status204NoContent)]
         public IActionResult Post(Product product)
         {
-            ProductsCommand.CreateProduct(product);
+            _productsCommand.CreateProduct(product);
             return NoContent();
         }
 
@@ -117,9 +75,9 @@ namespace Products.Controllers
         [ProducesResponseType(StatusCodes.Status204NoContent)]
         public IActionResult Update(Guid id, Product product)
         {
-            var errors = ProductsCommandValidator.ValidateUpdateProduct(id, product);
+            var errors = _productsCommandValidator.ValidateUpdateProduct(id, product);
             if (errors.Count == 0) {
-                ProductsCommand.UpdateProduct(id, product);
+                _productsCommand.UpdateProduct(id, product);
             }
 
             return NoContent();
@@ -129,7 +87,7 @@ namespace Products.Controllers
         [ProducesResponseType(StatusCodes.Status204NoContent)]
         public IActionResult Delete(Guid id)
         {
-            ProductsCommand.DeleteProduct(id);
+            _productsCommand.DeleteProduct(id);
             return NoContent();
         }
 
@@ -137,7 +95,7 @@ namespace Products.Controllers
         [ProducesResponseType(StatusCodes.Status200OK)]
         public IActionResult GetOptions(Guid productId)
         {
-            return Ok(ProductOptionsQuery.GetOptions(productId));
+            return Ok(_productOptionsQuery.GetOptions(productId));
         }
 
         [HttpGet("{productId}/options/{id}")]
@@ -145,7 +103,7 @@ namespace Products.Controllers
         [ProducesResponseType(StatusCodes.Status404NotFound)]
         public IActionResult GetOption(Guid productId, Guid id)
         {
-            var option = ProductOptionsQuery.GetOption(productId, id);
+            var option = _productOptionsQuery.GetOption(productId, id);
             if (option == null)
                 return NotFound();
 
@@ -157,7 +115,7 @@ namespace Products.Controllers
         [ProducesResponseType(StatusCodes.Status404NotFound)]
         public IActionResult CreateOption(Guid productId, ProductOption option)
         {
-            var results = ProductOptionsCommandValidator.ValidateCreateOption(productId, option);
+            var results = _productOptionsCommandValidator.ValidateCreateOption(productId, option);
             if (results.Count != 0) {
                 var error = results.First();
                 if (error.Status == StatusCodes.Status404NotFound)
@@ -167,7 +125,7 @@ namespace Products.Controllers
                 throw new Exception(JsonConvert.SerializeObject(error));
             }
 
-            ProductOptionsCommand.CreateOption(productId, option);
+            _productOptionsCommand.CreateOption(productId, option);
             return NoContent();
         }
 
@@ -177,7 +135,7 @@ namespace Products.Controllers
         public IActionResult UpdateOption(Guid id, ProductOption option)
         {
 
-            var results = ProductOptionsCommandValidator.ValidateUpdateOption(id, option);
+            var results = _productOptionsCommandValidator.ValidateUpdateOption(id, option);
             if (results.Count != 0) {
                 var error = results.First();
                 if (error.Status == StatusCodes.Status404NotFound)
@@ -187,7 +145,7 @@ namespace Products.Controllers
                 throw new Exception(JsonConvert.SerializeObject(error));
             }
 
-            ProductOptionsCommand.UpdateOption(id, option);
+            _productOptionsCommand.UpdateOption(id, option);
             return NoContent();
         }
 
@@ -196,7 +154,7 @@ namespace Products.Controllers
 
         public IActionResult DeleteOption(Guid id)
         {
-            ProductOptionsCommand.DeleteOption(id);
+            _productOptionsCommand.DeleteOption(id);
             return NoContent();
         }
     }

@@ -3,7 +3,7 @@ using Products.Models;
 
 namespace Products.Commands
 {
-  public class ProductsCommand
+  public class ProductsCommand : IProductsCommand
   {
     public void CreateProduct(Product product)
     {

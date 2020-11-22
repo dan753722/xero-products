@@ -2,26 +2,38 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using Autofac;
+using Autofac.Extensions.DependencyInjection;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.HttpsPolicy;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Configuration;
-using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Logging.Console;
 using Microsoft.Extensions.Options;
 using Microsoft.OpenApi.Models;
+using Microsoft.Extensions.DependencyInjection;
+using Products.Queries;
+using Products.CommandValidators;
+using Products.Commands;
 
 namespace Products
 {
     public class Startup
     {
-        public Startup(IConfiguration configuration)
+        public Startup(IHostingEnvironment env)
         {
-            Configuration = configuration;
+            var builder = new ConfigurationBuilder()
+                .SetBasePath(env.ContentRootPath)
+                .AddJsonFile("appsettings.json", optional: true, reloadOnChange: true)
+                .AddJsonFile($"appsettings.{env.EnvironmentName}.json", optional: true)
+                .AddEnvironmentVariables();
+            this.Configuration = builder.Build();
         }
 
-        public IConfiguration Configuration { get; }
+        public IConfigurationRoot Configuration { get; private set; }
+        public ILifetimeScope AutofacContainer { get; private set; }
 
         // This method gets called by the runtime. Use this method to add services to the container.
         public void ConfigureServices(IServiceCollection services)
@@ -29,7 +41,8 @@ namespace Products
             services.AddMvc(option =>
             {
                 option.EnableEndpointRouting = false;
-            });
+            })
+            .AddControllersAsServices();
 
             services.AddSwaggerGen(c =>
             {
@@ -42,8 +55,45 @@ namespace Products
             });
         }
 
+        public void ConfigureContainer(ContainerBuilder builder)
+        {
+            // If you want to set up a controller for, say, property injection
+            // you can override the controller registration after populating services.
+            // var loggerFactory = new LoggerFactory();
+            // builder.RegisterInstance(loggerFactory).As<ILoggerFactory>().SingleInstance();
+            // builder.RegisterGeneric(typeof(Logger<>))
+            //     .As(typeof(ILogger<>))
+            //     .SingleInstance();
+
+            builder.RegisterType<ProductOptionsQuery>()
+                .As<IProductOptionsQuery>()
+                .SingleInstance();
+            builder.RegisterType<ProductsQuery>()
+                .As<IProductsQuery>()
+                .SingleInstance();
+
+            builder.RegisterType<ProductsCommandValidator>()
+                .As<IProductsCommandValidator>()
+                .SingleInstance();
+
+            builder.RegisterType<ProductOptionsCommandValidator>()
+                .As<IProductOptionsCommandValidator>()
+                .SingleInstance();
+
+            builder.RegisterType<ProductsCommand>()
+                .As<IProductsCommand>()
+                .SingleInstance();
+
+            builder.RegisterType<ProductOptionsCommand>()
+                .As<IProductOptionsCommand>()
+                .SingleInstance();
+        }
+
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
-        public void Configure(IApplicationBuilder app, IHostingEnvironment env)
+        public void Configure(
+            IApplicationBuilder app,
+            IHostingEnvironment env
+        )
         {
             if (env.IsDevelopment())
             {
@@ -66,6 +116,9 @@ namespace Products
             });
 
             app.UseHttpsRedirection();
+
+            this.AutofacContainer = app.ApplicationServices.GetAutofacRoot();
+
             app.UseMvc();
         }
     }
